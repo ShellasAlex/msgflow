@@ -58,6 +58,8 @@ jobs:
             export NULLCLAW_MODEL=$(echo '${{ inputs.config }}' | jq -r '.nullclaw_model // empty')
             export WIKI_REPO=$(echo '${{ inputs.config }}' | jq -r '.wiki_repo // empty')
             export TASK_TIMEOUT=$(echo '${{ inputs.config }}' | jq -r '.task_timeout // empty')
+            export PUBLISH_TARGET=$(echo '${{ inputs.config }}' | jq -r '.publish_target // empty')
+            export FEISHU_WIKI_SPACE=$(echo '${{ inputs.config }}' | jq -r '.feishu_wiki_space // empty')
           fi
 
           # 敏感配置从 Worker 拉取
@@ -82,6 +84,7 @@ jobs:
           : ${LLMWIKI_TOKEN:=${{ secrets.LLMWIKI_TOKEN }}}
           : ${WIKI_REPO:=${{ vars.WIKI_REPO }}}
           : ${TASK_TIMEOUT:=600}
+          : ${PUBLISH_TARGET:=mowen}
 
           # 导出到后续 steps
           echo "NULLCLAW_API_KEY=$NULLCLAW_API_KEY" >> $GITHUB_ENV
@@ -92,6 +95,8 @@ jobs:
           echo "LLMWIKI_TOKEN=$LLMWIKI_TOKEN" >> $GITHUB_ENV
           echo "WIKI_REPO=$WIKI_REPO" >> $GITHUB_ENV
           echo "TASK_TIMEOUT=$TASK_TIMEOUT" >> $GITHUB_ENV
+          echo "PUBLISH_TARGET=$PUBLISH_TARGET" >> $GITHUB_ENV
+          echo "FEISHU_WIKI_SPACE=$FEISHU_WIKI_SPACE" >> $GITHUB_ENV
 
       - name: Checkout wiki repo
         if: env.WIKI_REPO != ''

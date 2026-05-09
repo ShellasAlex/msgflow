@@ -79,11 +79,15 @@ button:hover{background:#1d4ed8}
 <label>Wiki Token</label><div class="desc">访问私有知识库仓库的 GitHub Personal Access Token</div><input id="llmwiki_token" placeholder="ghp_...">
 <label>任务超时(秒)</label><div class="desc">AI 执行单个任务的最长等待时间，蒸馏等复杂任务建议设为 1800</div><input id="task_timeout" type="number" placeholder="600">
 </div>
+<div class="section"><h2>🚀 发布配置</h2>
+<label>默认发布渠道</label><div class="desc">改写完成后自动发布到哪里（feishu / mowen / none）</div><input id="publish_target" placeholder="mowen">
+<label>飞书知识库 Space ID</label><div class="desc">发布到飞书知识库时的目标空间 ID（留空则发布到我的空间）</div><input id="feishu_wiki_space" placeholder="可选">
+</div>
 <button onclick="save()">💾 保存</button>
 <div id="msg" class="msg"></div>
 <script>
 const token=new URLSearchParams(location.search).get('token');
-const fields=['nullclaw_api_key','nullclaw_base_url','nullclaw_model','mowen_api_key','unsplash_key','wiki_repo','llmwiki_token','task_timeout'];
+const fields=['nullclaw_api_key','nullclaw_base_url','nullclaw_model','mowen_api_key','unsplash_key','wiki_repo','llmwiki_token','task_timeout','publish_target','feishu_wiki_space'];
 const h={'Authorization':'Bearer '+token,'Content-Type':'application/json'};
 
 async function load(){

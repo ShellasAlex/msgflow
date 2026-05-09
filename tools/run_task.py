@@ -37,6 +37,10 @@ def main():
     p = sub.add_parser("publish", help="发布到墨问")
     p.add_argument("target", help="文件路径")
 
+    # publish_feishu
+    p = sub.add_parser("publish_feishu", help="发布到飞书文档")
+    p.add_argument("target", help="文档标题或文件路径")
+
     # pending
     sub.add_parser("pending", help="列出未发布文件")
 
@@ -51,7 +55,7 @@ def main():
     args = parser.parse_args()
 
     # 延迟 import，避免无关模块的依赖报错
-    from pipelines import fetch, rewrite, ingest, query, distill, publish, pending, lint
+    from pipelines import fetch, rewrite, ingest, query, distill, publish, pending, lint, publish_feishu
     from capabilities import ai_runner
     from capabilities.logger import get_logger
     log = get_logger("cli")
@@ -63,6 +67,7 @@ def main():
         "query": lambda: query.execute(args.target),
         "distill": lambda: distill.execute(args.target),
         "publish": lambda: publish.execute(args.target),
+        "publish_feishu": lambda: publish_feishu.execute(args.target),
         "pending": lambda: pending.execute(),
         "lint": lambda: lint.execute(),
         "skill": lambda: ai_runner.run_skill(args.skill, args.target),

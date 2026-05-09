@@ -24,7 +24,15 @@ export function parseCommand(text) {
   if (distillMatch) return { action: "distill", target: distillMatch[1] };
 
   const publishMatch = text.match(/^(?:发布|publish)\s+(.+)$/i);
-  if (publishMatch) return { action: "publish", target: publishMatch[1].trim() };
+  if (publishMatch) {
+    const target = publishMatch[1].trim();
+    // 发布飞书 / 发布墨问 带渠道指定
+    const channelMatch = target.match(/^(?:飞书|feishu)\s+(.+)$/i);
+    if (channelMatch) return { action: "publish_feishu", target: channelMatch[1].trim() };
+    const mowenMatch = target.match(/^(?:墨问|mowen)\s+(.+)$/i);
+    if (mowenMatch) return { action: "publish", target: mowenMatch[1].trim() };
+    return { action: "publish", target };
+  }
 
   if (/^(?:健康检查|lint)$/i.test(text)) return { action: "lint", target: "full" };
   if (/^(?:待发布|pending)$/i.test(text)) return { action: "pending", target: "list" };
@@ -50,7 +58,9 @@ export const HELP_TEXT = `支持的指令：
 • 查询 <问题> → 基于知识库回答
 • 改写 鲁迅/马三立/徐志摩 <URL> → 风格改写+自动发布
 • 待发布 → 查看未上传的文件
-• 发布 <文件路径> → 手动发布到墨问
+• 发布 <文件路径> → 发布到默认渠道
+• 发布 飞书 <标题> → 发布到飞书文档
+• 发布 墨问 <文件路径> → 发布到墨问
 • 蒸馏 <人名> → 生成人物思维 Skill
 • 健康检查 → 检查知识库一致性
 • skill:名称 <消息> → 执行任意 skill`;

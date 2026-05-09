@@ -1,5 +1,5 @@
 const SENSITIVE_KEYS = ["nullclaw_api_key", "mowen_api_key", "unsplash_key", "llmwiki_token"];
-const NON_SENSITIVE_KEYS = ["nullclaw_base_url", "nullclaw_model", "wiki_repo", "task_timeout"];
+const NON_SENSITIVE_KEYS = ["nullclaw_base_url", "nullclaw_model", "wiki_repo", "task_timeout", "publish_target", "feishu_wiki_space"];
 
 function mask(val) {
   if (!val || val.length <= 4) return "****";
