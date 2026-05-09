@@ -126,6 +126,14 @@ jobs:
           curl -fSL -o /usr/local/bin/mowen-cli https://github.com/ohmycli/mowen-cli/releases/download/v0.4.0/mowen-cli-linux-x86_64
           chmod +x /usr/local/bin/mowen-cli
           /usr/local/bin/mowen-cli --version
+          # 安装 lark-cli（飞书 CLI）
+          npm install -g @larksuite/cli || true
+
+      - name: Configure lark-cli
+        if: env.FEISHU_APP_ID != ''
+        run: |
+          lark-cli config set app_id "$FEISHU_APP_ID" 2>/dev/null || true
+          lark-cli config set app_secret "$FEISHU_APP_SECRET" 2>/dev/null || true
 
       - name: Install skills
         run: |
