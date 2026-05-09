@@ -51,6 +51,30 @@
 
 > 如果你已经配置了飞书消息渠道，可以复用同一个应用，只需要加上文档读取权限即可。
 
+## 获取知识库 Space ID
+
+如果你想把内容发布到飞书知识库（而不是「我的空间」），需要知识库的 Space ID。
+
+**获取方法：**
+
+1. 打开飞书知识库页面，进入你要发布到的知识库
+2. 看浏览器地址栏，URL 格式为：`https://xxx.feishu.cn/wiki/space/7xxxxxxxxxxxxxxx`
+3. 最后那串数字就是 Space ID（如 `7380000000000000000`）
+
+或者通过 API 获取：
+
+```bash
+# 先拿 token
+TOKEN=$(curl -s https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal \
+  -d '{"app_id":"你的APP_ID","app_secret":"你的APP_SECRET"}' | jq -r '.tenant_access_token')
+
+# 列出你有权限的知识库
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://open.feishu.cn/open-apis/wiki/v2/spaces" | jq '.data.items[] | {name, space_id}'
+```
+
+拿到 Space ID 后，在 Admin 管理页面的「飞书知识库 Space ID」字段填入即可。
+
 ## 能抓什么
 
 | 文档类型 | 能否抓取 | 说明 |
