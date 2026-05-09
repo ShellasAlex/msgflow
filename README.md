@@ -145,6 +145,7 @@ flowchart LR
 | [部署指南](docs/deploy.md) | 完整的从零部署教程 |
 | [Telegram 接入](docs/channel-telegram.md) | Telegram Bot 创建和配置 |
 | [飞书接入](docs/channel-feishu.md) | 飞书应用创建和事件订阅 |
+| [飞书文档抓取](docs/feishu-doc-fetch.md) | 配置飞书 API 高质量抓取文档 |
 | [企业微信接入](docs/channel-wecom.md) | 企业微信自建应用配置 |
 | [配置项获取指南](docs/admin-config-guide.md) | 每个配置项如何获取（小白友好） |
 | [Admin 部署操作](docs/admin-setup-guide.md) | 管理页面部署步骤（含 AI 可执行版） |
