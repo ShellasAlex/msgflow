@@ -1,7 +1,7 @@
 import { handleTelegram, sendTelegram } from "./handlers/telegram.js";
 import { handleFeishu, sendFeishu } from "./handlers/feishu.js";
 import { handleWecom, handleWecomVerify, sendWecom } from "./handlers/wecom.js";
-import { handleAdmin, handleAdminConfig, handleInternalConfig } from "./handlers/admin.js";
+import { handleAdmin, handleAdminConfig, handleInternalConfig, handleFeishuSpaces } from "./handlers/admin.js";
 import { log } from "./lib/log.js";
 
 // 常量时间字符串比较，防止时序攻击
@@ -41,6 +41,9 @@ export default {
       }
       if (path === "/admin/config" && (request.method === "GET" || request.method === "POST")) {
         return await handleAdminConfig(request, env);
+      }
+      if (path === "/admin/feishu-spaces" && request.method === "GET") {
+        return await handleFeishuSpaces(request, env);
       }
       // Workflow 拉取敏感配置
       if (path === "/internal/config" && request.method === "POST") {

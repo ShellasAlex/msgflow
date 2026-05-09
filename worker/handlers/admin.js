@@ -36,6 +36,36 @@ export async function handleAdminConfig(request, env) {
   return new Response("Method Not Allowed", { status: 405 });
 }
 
+export async function handleFeishuSpaces(request, env) {
+  if (!checkAdmin(request, env)) return new Response("Forbidden", { status: 403 });
+  const config = await getConfig(env);
+  const appId = config.feishu_app_id || env.FEISHU_APP_ID;
+  const appSecret = config.feishu_app_secret || env.FEISHU_APP_SECRET;
+  if (!appId || !appSecret) {
+    return new Response(JSON.stringify({ error: "未配置 FEISHU_APP_ID / FEISHU_APP_SECRET" }), {
+      status: 400, headers: { "Content-Type": "application/json" },
+    });
+  }
+  // 获取 token
+  const tokenResp = await fetch("https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+  });
+  const tokenData = await tokenResp.json();
+  if (tokenData.code !== 0) {
+    return new Response(JSON.stringify({ error: `获取 token 失败: ${tokenData.msg}` }), {
+      status: 500, headers: { "Content-Type": "application/json" },
+    });
+  }
+  // 列出知识库
+  const spacesResp = await fetch("https://open.feishu.cn/open-apis/wiki/v2/spaces", {
+    headers: { Authorization: `Bearer ${tokenData.tenant_access_token}` },
+  });
+  const spacesData = await spacesResp.json();
+  const spaces = (spacesData.data?.items || []).map(s => ({ name: s.name, space_id: s.space_id }));
+  return new Response(JSON.stringify({ spaces }), { headers: { "Content-Type": "application/json" } });
+}
+
 export async function handleInternalConfig(request, env) {
   if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
   const body = await request.json();
@@ -81,7 +111,7 @@ button:hover{background:#1d4ed8}
 </div>
 <div class="section"><h2>🚀 发布配置</h2>
 <label>默认发布渠道</label><div class="desc">改写完成后自动发布到哪里（feishu / mowen / none）</div><input id="publish_target" placeholder="mowen">
-<label>飞书知识库 Space ID</label><div class="desc">发布到飞书知识库时的目标空间 ID（留空则发布到我的空间）</div><input id="feishu_wiki_space" placeholder="可选">
+<label>飞书知识库 Space ID</label><div class="desc">发布到飞书知识库时的目标空间 ID（留空则发布到我的空间）<a href="#" onclick="fetchSpaces();return false" style="color:#2563eb;margin-left:8px">点击获取列表</a></div><input id="feishu_wiki_space" placeholder="可选"><div id="spaces" style="font-size:.75rem;color:#666;margin-top:.3rem"></div>
 </div>
 <button onclick="save()">💾 保存</button>
 <div id="msg" class="msg"></div>
@@ -95,6 +125,17 @@ async function load(){
   if(!r.ok)return;
   const d=await r.json();
   fields.forEach(f=>{if(d[f]!==undefined)document.getElementById(f).value=d[f]});
+}
+
+async function fetchSpaces(){
+  const el=document.getElementById('spaces');
+  el.textContent='加载中...';
+  const r=await fetch('/admin/feishu-spaces',{headers:h});
+  if(!r.ok){el.textContent='获取失败: '+r.status;return}
+  const d=await r.json();
+  if(d.error){el.textContent=d.error;return}
+  if(!d.spaces||!d.spaces.length){el.textContent='未找到知识库（检查应用权限）';return}
+  el.innerHTML=d.spaces.map(s=>'<a href="#" onclick="document.getElementById(\\'feishu_wiki_space\\').value=\\''+s.space_id+'\\';return false" style="color:#2563eb;margin-right:8px">'+s.name+' ('+s.space_id+')</a>').join('');
 }
 
 async function save(){
