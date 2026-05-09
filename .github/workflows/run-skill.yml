@@ -1,0 +1,97 @@
+name: Run Skill
+
+on:
+  workflow_dispatch:
+    inputs:
+      skill:
+        description: 'Skill 名称（对应 skills/ 下的目录名，如 markdown-proxy、lu-xun-writer）'
+        required: true
+        type: string
+      message:
+        description: '发给 agent 的指令（URL、改写要求、搜索任务等）'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  run-skill:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install NullClaw
+        run: |
+          curl -sL -o /usr/local/bin/nullclaw \
+            https://github.com/nullclaw/nullclaw/releases/download/v2026.5.4/nullclaw-linux-x86_64.bin
+          chmod +x /usr/local/bin/nullclaw
+          nullclaw version
+
+      - name: Configure NullClaw
+        run: |
+          nullclaw onboard \
+            --api-key "${{ secrets.NULLCLAW_API_KEY }}" \
+            --provider "custom:${{ secrets.NULLCLAW_BASE_URL }}" \
+            --model "${{ vars.NULLCLAW_MODEL || 'mimo-v2.5-pro' }}"
+
+          # 超时配置
+          nullclaw config set agent.message_timeout_secs 600
+
+          # 安全策略：CI 环境隔离，全部放开
+          nullclaw config set autonomy.level autonomous
+          nullclaw config set autonomy.allowed_commands '["*"]'
+          nullclaw config set autonomy.workspace_only false
+          nullclaw config set security.sandbox.enabled false
+          nullclaw config set http_request.enabled true
+          nullclaw config set http_request.allowed_domains '["*"]'
+          nullclaw config set browser.enabled true
+
+      - name: Install dependencies for browser skills
+        run: |
+          pip install playwright beautifulsoup4 lxml requests
+          playwright install chromium
+
+      - name: Install skill
+        run: |
+          mkdir -p ~/.nullclaw/workspace/skills
+          skill_name="${{ github.event.inputs.skill }}"
+
+          # 在 skills/ 下递归查找匹配的 skill 目录
+          skill_path=$(find skills -type d -name "$skill_name" | head -1)
+
+          if [ -z "$skill_path" ]; then
+            echo "Skill not found: $skill_name" >&2
+            echo "Available skills:"
+            find skills -name "SKILL.md" -exec dirname {} \;
+            exit 1
+          fi
+
+          cp -r "$skill_path" ~/.nullclaw/workspace/skills/"$skill_name"
+          echo "Installed skill from: $skill_path"
+
+      - name: Run skill
+        run: |
+          skill_name="${{ github.event.inputs.skill }}"
+          mkdir -p output
+
+          nullclaw agent --skill "$skill_name" \
+            -m "${{ github.event.inputs.message }}" \
+            | tee output/result.md
+
+          echo "Output saved to output/result.md"
+
+      - name: Collect workspace outputs
+        run: |
+          # 收集 nullclaw workspace 中产生的文件
+          if [ -d ~/.nullclaw/workspace/downloads ]; then
+            cp -r ~/.nullclaw/workspace/downloads/* output/ 2>/dev/null || true
+          fi
+          ls -la output/
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/
+          git diff --cached --quiet || (git commit -m "Run skill: ${{ github.event.inputs.skill }} - ${{ github.event.inputs.message }}" && git push)

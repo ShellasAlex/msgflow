@@ -1,0 +1,32 @@
+name = "msgflow-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# 多文件模块自动打包，无需额外配置
+# Wrangler 会自动 bundle 所有 import 的文件
+
+routes = [
+  { pattern = "your-domain.workers.dev", custom_domain = true }
+]
+
+[[kv_namespaces]]
+binding = "MSGFLOW_CONFIG"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+# 创建: wrangler kv namespace create MSGFLOW_CONFIG
+
+[vars]
+WORKER_URL = "https://your-domain.workers.dev"
+GITHUB_REPO = "your-username/msgflow"
+
+# Secrets（通过 wrangler secret put 设置）:
+#   ADMIN_TOKEN              — 管理页面鉴权
+#   TELEGRAM_BOT_TOKEN
+#   FEISHU_APP_ID
+#   FEISHU_APP_SECRET
+#   FEISHU_VERIFICATION_TOKEN
+#   WECOM_CORP_ID
+#   WECOM_CORP_SECRET
+#   WECOM_TOKEN
+#   WECOM_ENCODING_AES_KEY
+#   GITHUB_TOKEN
+#   CALLBACK_SECRET

@@ -1,0 +1,66 @@
+name: Rewrite Article
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_file:
+        description: 'Markdown file path, e.g. articles/my-article.md'
+        required: true
+        type: string
+      style:
+        description: 'Writing style'
+        required: true
+        type: choice
+        options:
+          - lu-xun
+          - ma-sanli
+          - xu-zhimo
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite-article:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate source file
+        run: test -f "${{ github.event.inputs.source_file }}"
+
+      - name: Install NullClaw
+        run: |
+          curl -sL -o /usr/local/bin/nullclaw https://github.com/nullclaw/nullclaw/releases/download/v2026.5.4/nullclaw-linux-x86_64.bin
+          chmod +x /usr/local/bin/nullclaw
+
+      - name: Configure NullClaw
+        run: |
+          nullclaw onboard --api-key "${{ secrets.NULLCLAW_API_KEY }}" --provider "custom:${{ secrets.NULLCLAW_BASE_URL }}" --model "${{ vars.NULLCLAW_MODEL || 'mimo-v2.5-pro' }}"
+          nullclaw config set agent.message_timeout_secs 600
+          nullclaw config set autonomy.level autonomous
+          nullclaw config set autonomy.allowed_commands '["*"]'
+          nullclaw config set autonomy.workspace_only false
+          nullclaw config set security.sandbox.enabled false
+          nullclaw config set http_request.enabled true
+          nullclaw config set browser.enabled true
+
+      - name: Install writer skill
+        run: |
+          mkdir -p ~/.nullclaw/workspace/skills
+          cp -r "skills/writers/${{ github.event.inputs.style }}-writer" ~/.nullclaw/workspace/skills/
+
+      - name: Rewrite article
+        run: |
+          source_path="${{ github.event.inputs.source_file }}"
+          style="${{ github.event.inputs.style }}"
+          output_path="rewritten/${style}-$(basename "$source_path")"
+          mkdir -p rewritten
+          bash tools/run-task.sh rewrite "$source_path" "$style" ""
+          cp /tmp/result.txt "$output_path"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rewritten/
+          git diff --cached --quiet || (git commit -m "Rewrite ${{ github.event.inputs.source_file }} in ${{ github.event.inputs.style }} style" && git push)

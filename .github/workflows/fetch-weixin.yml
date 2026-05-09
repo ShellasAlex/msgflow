@@ -1,0 +1,42 @@
+name: Fetch WeChat Article
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: '微信公众号文章 URL'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-article:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright beautifulsoup4 lxml
+          playwright install chromium
+
+      - name: Fetch article
+        run: |
+          output_path=$(python tools/content-fetch/fetch_weixin.py \
+            "${{ github.event.inputs.url }}" \
+            --output-dir articles)
+          echo "Saved article to ${output_path}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add articles/
+          git diff --cached --quiet || (git commit -m "Add article from ${{ github.event.inputs.url }}" && git push)
