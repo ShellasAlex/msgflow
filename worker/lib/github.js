@@ -31,7 +31,7 @@ export async function triggerWorkflow(env, command, channel, chatId) {
     resp = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+        Authorization: `Bearer ${env.PAT_TOKEN}`,
         Accept: "application/vnd.github.v3+json",
         "User-Agent": "msgflow-worker",
       },
