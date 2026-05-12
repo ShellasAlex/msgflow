@@ -1,0 +1,11 @@
+name = "msgflow-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "MSGFLOW_CONFIG"
+id = "60005598b4f04c0fb040fee8d3cfe395"
+
+[vars]
+WORKER_URL = "https://msgflow-worker. ShellasAlex.workers.dev"
+GITHUB_REPO = "ShellasAlex/msgflow"
